@@ -1,0 +1,38 @@
+version: '3'
+
+services:
+
+  event-endpoint:
+    container_name: quarkus
+    networks:
+      - rest-quarkus-network
+    build:
+      context: .
+      dockerfile: src/main/docker/Dockerfile.native
+    ports:
+      - "8081:8081"
+
+  database:
+    image: debezium/postgres:12-alpine
+    container_name: database_confluent
+    networks:
+      - rest-quarkus-network
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=confluent
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
+    volumes:
+      #- ./data/postgresql.conf.sample:/usr/share/postgresql/postgresql.conf.sample
+      - ./data/init.sql:/docker-entrypoint-initdb.d/1-init.sql
+      - ./data/dataset_cats.sql:/docker-entrypoint-initdb.d/2-dataset_cats.sql
+
+
+networks:
+  rest-quarkus-network:
+    driver: bridge
